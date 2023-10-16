@@ -1,1 +1,202 @@
 daily_notes
+EAX - 32 bits
+-AX - low 16 bits of EAX
+-AL - low 8 bits of AX or EAX
+-AH - high 8 bits of AX
+
+         EAX
+|----|----|----|----|
+      AX  |----|----|
+	        AL |----|
+	  AH  |----|
+	  
+General Purpose Registers:
+EAX, EBX, ECX, EDX
+
+*If you're only storing an ascii char, that's only 1 byte so use
+ AL or AH is the most effecient*
+ 
+EAX - Accumulator / data and returns (from functions)
+ECX counter - for/while loop counter
+ESP - extended stack pointer
+ESI source, EDI destination - data transfer
+EBP frame pointer - when we use the stack. Local vars and arguments
+EDX:EAX mul and divide
+	- 32 bit x 32 bit = up to 64 bit number
+	
+IP Register:
+	IP / EIP - control execution
+		JMP loads a memory location into EIP (but doesn't modify it)
+		
+Flags:
+	Carry (CF)
+	Overflow (OF)
+	Sign Flag (SF)
+	Zero Flag (ZF) - used heavily
+	
+	
+Fetch, Decode, Execute, Store - Pipeline
+Registers have faster access times than L1 Cache (1ns/2ns vs 3ns/10ns)
+
+Mnemonics (or instruction) - add
+Operand(s) (arguments, 0-2) - eax, ebx
+	modify a register or memory location
+
+%define (var_CAPS) value
+	this creates a hard coded value (static global variable)
+
+Data Directives:
+	db - define byte 8bits
+	dw - define word 2 bytes / 16 bits
+	     unicode 2 chars
+	dd - define double word 4 byes / 32 bits
+		 pointers are 32bits
+	dq - define quad-word 64 bits
+	
+	db - This litterally allocates in memory 1byte per letter of a string (for example "hello" would be 5 bytes)
+	
+Identifiers - vars, constants, procedures, or labels. Case sensitive
+
+{try_this}:
+	mov al, bl ; works
+	add eax, bh ; doesn't work VV line 82 explains it
+	
+Segments:
+	.data
+		used for string and gobal vars
+		initialized (RW)[read and write permissions]
+	.bss
+		unitialized (no values in the vars at the start/placeholder var) variables (RW)
+	.text
+		your code goes here
+
+		
+mov eax, [VarA] ; the '[]' means it is referencing the data, not the memory address
+
+Zeroing out a register:
+	mov eax, 0 ; note this isnt 0x or 'h'
+		this mov references the whole 32bits so the result is 00000000
+	xor eax, eax
+		this works also
+			could this fail?
+			
+Moving mismatched data size:
+	moving -7 (F9 in 2s compliment)
+		mov bl, F9h ; no problem, both are 1 byte
+		mov eax, bl ; won't work, too small
+	
+	movsx - sign extend
+		takes MSB and fills the rest of the register with it
+			-7 (leading 1 means it fills the top with 1's)
+	movzx - zero extend
+		doesn't check MSB, just extends zeros
+		
+the function call for:
+	call print_int
+		this only deals with eax
+			do all functions only run out of eax?
+	{try_}: 
+		call print_int ; is this just the value in eax?
+		mov eax, 0
+		call print_int
+		
+			
+Multiplication:
+	mul eax; mul only received a source. No destination
+			has to be a register or memory location
+			
+			; byte * byte = AX
+			; dx:ax
+			; edx;eax (16bit)
+			; DX= msb
+			; AX= lsb
+			; just think, the larger the mul, the more space needed
+			
+	imul	; signed multiplication
+			; can define source, destination, source 2
+	imul dest, source ;		
+	imul eax, ebx; mulipliy eax,ebx and store in eax
+	imul edx, ecx, eax ; dest, source1, source2 
+			; source 1 and 2 can be immediate value; eg 8h
+			
+
+Divide:
+	div source	; unsigned
+				; AX / source (8-bit). quotient AL remainder AH
+				; 16 bit (DX:AX / source) AX remainder DX
+				; 32 bit (EDX:EAX / source) EAX remainder EDX
+				; dividing over writes the data we used to divide by
+	idiv ; 
+	
+
+Conditions:
+	cmp reg1, reg2/immediate ; compare 2 values
+							 ; does subtraction
+							 ; reg1 - reg2
+							 ; no results stored. Flags are set
+							 ; CF (carry), OF (overflow), ZF (zero)
+							 ; if reg1==reg2
+									; ZF = 1
+							 ; if reg1>reg2
+									; ZF=0 and CF=0
+							 ; if reg1<reg2
+									; ZF=0 and CF=1
+									; carry flag as a borrow occurred
+									
+Branching:
+	Jump:	; JMP
+			; JZ if ZF is set (zero flag)
+			; JNZ if ZF is unset
+			; JO if OF is set (overflow flag)
+			; JNO if OF is unset
+			; JS if SF is set (sign flag)
+			; JNS is SJ is unset
+			; JC if CF is set (carry flag)
+			; JNC if CF is unset
+			; JP if PF is set (parity flag)
+			; JNP if PF is unset
+			
+	can be conditional or unconditional
+	
+	for-like loops:
+		loop label		; decrement ecx jump to label if ecx !=0
+		loope or loopz	; jmps if ECX !=0 and ZF=1 ;uncommon
+		loopne or loopnz; jmps if ECX !=0 and ZF=0 ;uncommon
+		
+Shifting:
+	original     1110 1010
+	Left shift   1101 0100 ; pushes a zero on lsb (can push 1 into CF)
+	Right shift  0111 0101 ; pushes a zero on msb
+		
+	logical shift - shl & shr
+		; can shift by N bits, set in CL or use a constants
+		; last bit shifted out sets in the CF (carry flag)
+		; Incoming bits are always zero
+		shl ax, 1 ; shift an immediate value in ax reg
+		
+clc ; clear carry flag (0)
+stc ; set CF (1)
+		; faster (native) to mul / div by 2
+	
+	Arithmetic Shifts:
+		Ensure signed bits treated correctly
+		
+		Shift Right:
+			SAR ; keep the sign, MSB will not be shifted new bits are copies of the sign bit. Negative still negative
+			SAL = SHL
+Rotate:
+	rol reg, immediate (bits) ; rol eax 16
+	ror
+	rcl ; Rotate with Carry use CF as part of the wheel
+	rcr
+	
+Bitwise Operations:
+	and
+	or
+	xor reg, immediate
+	not reg; inversion of bits in reg
+	test ; performs an AND operation but only sets the flags
+		 ; does not destroy reg data
+		 ; ?Q? which flags? in example ZF is set, can others be set?
+		 
+		 
