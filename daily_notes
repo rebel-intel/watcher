@@ -1,3 +1,11 @@
+These learning posts will be based on my studies towards becoming a malware analyst / threat intel analyst. My current goal is to finish studying through the videos put together by Dr Josh Stroschein (former DSU Professor - currently Reverse engineer at FLARE/@Google
+ @jstrosch on twitter) - Thank you, Josh!
+
+Below are notes from the first 10 videos on the "Learning Assembly" playlist.
+https://www.youtube.com/playlist?list=PLHJns8WZXCdvESvdr1BRjo4RHiR1Ylhw9
+https://pacman128.github.io/static/pcasm-book.pdf
+
+
 daily_notes
 EAX - 32 bits
 -AX - low 16 bits of EAX
